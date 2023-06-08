@@ -5,7 +5,6 @@ import core.AbstractPlayer;
 import core.actions.AbstractAction;
 import core.interfaces.IStateHeuristic;
 import players.mcts.MCTSEnums;
-import players.mcts.MCTSParams;
 
 import java.util.List;
 import java.util.Random;
