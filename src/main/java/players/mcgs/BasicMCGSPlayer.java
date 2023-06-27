@@ -22,16 +22,16 @@ import static players.mcts.MCTSEnums.TreePolicy.UCB;
 public class BasicMCGSPlayer extends AbstractPlayer {
 
     Random rnd;
-    MCTSParams params;
+    MCGSParams params;
 
     public BasicMCGSPlayer() {
         this(System.currentTimeMillis());
     }
 
     public BasicMCGSPlayer(long seed) {
-        this.params = new MCTSParams(seed);
+        this.params = new MCGSParams(seed);
         rnd = new Random(seed);
-        setName("Basic MCTS");
+        setName("Basic MCGS");
 
         // These parameters can be changed, and will impact the Basic MCTS algorithm
         this.params.K = Math.sqrt(2);
@@ -48,19 +48,19 @@ public class BasicMCGSPlayer extends AbstractPlayer {
         this.params.treePolicy = UCB;
     }
 
-    public BasicMCGSPlayer(MCTSParams params) {
+    public BasicMCGSPlayer(MCGSParams params) {
         this.params = params;
         rnd = new Random(params.getRandomSeed());
-        setName("Basic MCTS");
+        setName("Basic MCGS");
     }
 
     @Override
     public AbstractAction _getAction(AbstractGameState gameState, List<AbstractAction> allActions) {
         // Search for best action from the root
-        BasicTreeNode root = new BasicTreeNode(this, null, gameState, rnd);
+        BasicGraphNode root = new BasicGraphNode(this, null, null, gameState, rnd);
 
         // mctsSearch does all of the hard work
-        root.mctsSearch();
+        root.mcgsSearch();
 
         // Return best action
         return root.bestAction();
@@ -73,7 +73,7 @@ public class BasicMCGSPlayer extends AbstractPlayer {
 
     @Override
     public String toString() {
-        return "BasicMCTS";
+        return "BasicMCGS";
     }
 
     @Override
