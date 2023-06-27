@@ -3,62 +3,47 @@ package players.mcgs;
 import core.AbstractGameState;
 import core.actions.AbstractAction;
 import players.PlayerConstants;
-import players.mcts.BasicMCTSPlayer;
 import players.simple.RandomPlayer;
 import utilities.ElapsedCpuTimer;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 import static java.util.stream.Collectors.toList;
 import static players.PlayerConstants.*;
 import static utilities.Utils.noise;
 
-class BasicTreeNode {
-    // Root node of tree
-    BasicTreeNode root;
-    // Parent of this node
-    BasicTreeNode parent;
-    // Children of this node
-    Map<AbstractAction, BasicTreeNode> children = new HashMap<>();
-    // Depth of this node
-    final int depth;
+class BasicGraphNode {
+    BasicGraph basicGraph;
 
-    // Total value of this node
-    private double totValue;
-    // Number of visits
-    private int nVisits;
-    // Number of FM calls and State copies up until this node
-    private int fmCallsCount;
+    // State in this node (open loop - this is updated by onward trajectory....be very careful about using)
+    protected AbstractGameState openLoopState;
+
+    protected AbstractGameState state;
+
+//    applied the action already, have i took this action already
+//    store statistic for ucb
+    private Map<AbstractAction, ActionStats> actionMap = new HashMap<>();
+
     // Parameters guiding the search
     private BasicMCGSPlayer player;
     private Random rnd;
     private RandomPlayer randomPlayer = new RandomPlayer();
 
-    // State in this node (closed loop)
-    private AbstractGameState state;
-
-    protected BasicTreeNode(BasicMCGSPlayer player, BasicTreeNode parent, AbstractGameState state, Random rnd) {
+    protected BasicGraphNode(BasicMCGSPlayer player, BasicGraphNode parent, BasicGraph basicGraph, AbstractGameState state, Random rnd) {
         this.player = player;
-        this.fmCallsCount = 0;
-        this.parent = parent;
-        this.root = parent == null ? this : parent.root;
-        totValue = 0.0;
-        setState(state);
-        if (parent != null) {
-            depth = parent.depth + 1;
+        if (Objects.nonNull(basicGraph)) {
+            this.basicGraph = basicGraph;
         } else {
-            depth = 0;
+            this.basicGraph = new BasicGraph();
         }
+        setState(state);
         this.rnd = rnd;
     }
 
     /**
      * Performs full MCTS search, using the defined budget limits.
      */
-    void mctsSearch() {
+    void mcgsSearch() {
 
         // Variables for tracking time budget
         double avgTimeTaken;
@@ -80,7 +65,7 @@ class BasicTreeNode {
             ElapsedCpuTimer elapsedTimerIteration = new ElapsedCpuTimer();
 
             // Selection + expansion: navigate tree until a node not fully expanded is found, add a new node to the tree
-            BasicTreeNode selected = treePolicy();
+            BasicGraphNode selected = treePolicy();
             // Monte carlo rollout: return value of MC rollout from the newly added node
             double delta = selected.rollOut();
             // Back up the value of the rollout through the tree
@@ -101,7 +86,7 @@ class BasicTreeNode {
                 stop = numIters >= player.params.budget;
             } else if (budgetType == BUDGET_FM_CALLS) {
                 // FM calls budget
-                stop = fmCallsCount > player.params.budget;
+                stop = basicGraph.getFmCallsCount() > player.params.budget;
             }
         }
     }
@@ -113,12 +98,12 @@ class BasicTreeNode {
      *
      * @return - new node added to the tree.
      */
-    private BasicTreeNode treePolicy() {
+    private BasicGraphNode treePolicy() {
 
-        BasicTreeNode cur = this;
+        BasicGraphNode cur = this;
 
         // Keep iterating while the state reached is not terminal and the depth of the tree is not exceeded
-        while (cur.state.isNotTerminal() && cur.depth < player.params.maxTreeDepth) {
+        while (cur.state.isNotTerminal()) {
             if (!cur.unexpandedActions().isEmpty()) {
                 // We have an unexpanded action
                 cur = cur.expand();
@@ -126,18 +111,24 @@ class BasicTreeNode {
             } else {
                 // Move to next child given by UCT function
                 AbstractAction actionChosen = cur.ucb();
-                cur = cur.children.get(actionChosen);
+                actionChosen.execute(openLoopState);
+                int hashCode = getHashCode(openLoopState);
+                if (basicGraph.isNodeExist(hashCode)) {
+                    return basicGraph.getNode(hashCode);
+                } else {
+                    basicGraph.putNode(hashCode, this);
+                }
             }
         }
 
         return cur;
     }
 
-
     private void setState(AbstractGameState newState) {
-        state = newState;
+        this.state = newState.copy();
+        this.openLoopState = newState.copy();
         for (AbstractAction action : player.getForwardModel().computeAvailableActions(state)) {
-            children.put(action, null); // mark a new node to be expanded
+            actionMap.put(action, false);
         }
     }
 
@@ -145,7 +136,7 @@ class BasicTreeNode {
      * @return A list of the unexpanded Actions from this State
      */
     private List<AbstractAction> unexpandedActions() {
-        return children.keySet().stream().filter(a -> children.get(a) == null).collect(toList());
+        return actionMap.keySet().stream().filter(a -> !actionMap.get(a)).collect(toList());
     }
 
     /**
@@ -153,22 +144,29 @@ class BasicTreeNode {
      *
      * @return - new child node.
      */
-    private BasicTreeNode expand() {
+
+    private BasicGraphNode expand() {
         // Find random child not already created
         Random r = new Random(player.params.getRandomSeed());
-        // pick a random unchosen action
+        // pick a random not chosen action
         List<AbstractAction> notChosen = unexpandedActions();
         AbstractAction chosen = notChosen.get(r.nextInt(notChosen.size()));
 
         // copy the current state and advance it using the chosen action
         // we first copy the action so that the one stored in the node will not have any state changes
-        AbstractGameState nextState = state.copy();
+        AbstractGameState nextState = openLoopState.copy();
         advance(nextState, chosen.copy());
 
-        // then instantiate a new node
-        BasicTreeNode tn = new BasicTreeNode(player, this, nextState, rnd);
-        children.put(chosen, tn);
-        return tn;
+        // then instantiate a new node or get existing node from transposition table
+        actionMap.put(chosen, true);
+
+        if (basicGraph.isNodeExist(getHashCode(nextState))) {
+            return basicGraph.getNode(getHashCode(nextState));
+        } else {
+            BasicGraphNode basicGraphNode = new BasicGraphNode(player, this, basicGraph, nextState, rnd);
+            basicGraph.putNode(getHashCode(nextState), basicGraphNode);
+            return basicGraphNode;
+        }
     }
 
     /**
@@ -179,7 +177,7 @@ class BasicTreeNode {
      */
     private void advance(AbstractGameState gs, AbstractAction act) {
         player.getForwardModel().next(gs, act);
-        root.fmCallsCount++;
+        basicGraph.increaseFmCallCount();
     }
 
     private AbstractAction ucb() {
@@ -187,8 +185,10 @@ class BasicTreeNode {
         AbstractAction bestAction = null;
         double bestValue = -Double.MAX_VALUE;
 
-        for (AbstractAction action : children.keySet()) {
-            BasicTreeNode child = children.get(action);
+        for (AbstractAction action : actionMap.keySet()) {
+            AbstractGameState nextState = openLoopState.copy();
+            advance(nextState, action);
+            BasicGraphNode child = getNode(nextState);
             if (child == null)
                 throw new AssertionError("Should not be here");
             else if (bestAction == null)
@@ -222,7 +222,7 @@ class BasicTreeNode {
         if (bestAction == null)
             throw new AssertionError("We have a null value in UCT : shouldn't really happen!");
 
-        root.fmCallsCount++;  // log one iteration complete
+        basicGraph.increaseFmCallCount();
         return bestAction;
     }
 
@@ -269,14 +269,20 @@ class BasicTreeNode {
     /**
      * Back up the value of the child through all parents. Increase number of visits and total value.
      *
-     * @param result - value of rollout to backup
+     * @param result - value of rollout to back up
      */
     private void backUp(double result) {
-        BasicTreeNode n = this;
+        BasicGraphNode n = this;
         while (n != null) {
             n.nVisits++;
             n.totValue += result;
-            n = n.parent;
+//            n = n.parent;
+//            if (n == this) {
+//                break;
+//            }
+//            round or turn info
+//            record the node and the action that led to this node in a list to back prop
+//            stat store in the node that make decision
         }
     }
 
@@ -290,15 +296,18 @@ class BasicTreeNode {
         double bestValue = -Double.MAX_VALUE;
         AbstractAction bestAction = null;
 
-        for (AbstractAction action : children.keySet()) {
-            if (children.get(action) != null) {
-                BasicTreeNode node = children.get(action);
+        for (AbstractAction action : actionMap.keySet()) {
+            if (actionMap.get(action)) {
+
+                AbstractGameState nextState = openLoopState.copy();
+                advance(nextState, action);
+                BasicGraphNode node = getNode(nextState);
                 double childValue = node.nVisits;
 
                 // Apply small noise to break ties randomly
                 childValue = noise(childValue, player.params.epsilon, player.rnd.nextDouble());
 
-                // Save best value (highest visit count)
+                // Save best value (the highest visit count)
                 if (childValue > bestValue) {
                     bestValue = childValue;
                     bestAction = action;
@@ -311,6 +320,14 @@ class BasicTreeNode {
         }
 
         return bestAction;
+    }
+
+    private BasicGraphNode getNode(AbstractGameState nextState) {
+        return basicGraph.getNode(getHashCode(nextState));
+    }
+
+    private int getHashCode(AbstractGameState nextState) {
+        return Arrays.hashCode(player.params.EIStateFeatureVector.featureVector(nextState, player.getPlayerID()));
     }
 
 }

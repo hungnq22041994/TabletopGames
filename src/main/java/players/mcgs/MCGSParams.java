@@ -24,7 +24,7 @@ import static players.mcts.MCTSEnums.Strategies.PARAMS;
 import static players.mcts.MCTSEnums.Strategies.RANDOM;
 import static players.mcts.MCTSEnums.TreePolicy.*;
 
-public class MCTSParams extends PlayerParameters {
+public class MCGSParams extends PlayerParameters {
 
     public double K = Math.sqrt(2);
     public int rolloutLength = 10;
@@ -52,7 +52,7 @@ public class MCTSParams extends PlayerParameters {
     public double exploreEpsilon = 0.1;
     public boolean gatherExpertIterationData = false;
     public String expertIterationFileStem = "ExpertIterationData";
-    public String expertIterationStateFeatures = "";
+    public String expertIterationStateFeatures = "TicTacToeStateVector";
     public IStateFeatureVector EIStateFeatureVector;
     public String expertIterationActionFeatures = "";
     public IActionFeatureVector EIActionFeatureVector;
@@ -69,11 +69,11 @@ public class MCTSParams extends PlayerParameters {
     public IStateHeuristic heuristic = AbstractGameState::getHeuristicScore;
     public IStateHeuristic opponentHeuristic = AbstractGameState::getHeuristicScore;
 
-    public MCTSParams() {
+    public MCGSParams() {
         this(System.currentTimeMillis());
     }
 
-    public MCTSParams(long seed) {
+    public MCGSParams(long seed) {
         super(seed);
         addTunableParameter("K", Math.sqrt(2), Arrays.asList(0.0, 0.1, 1.0, Math.sqrt(2), 3.0, 10.0));
         addTunableParameter("MASTBoltzmann", 0.1);
@@ -237,8 +237,8 @@ public class MCTSParams extends PlayerParameters {
     }
 
     @Override
-    protected MCTSParams _copy() {
-        MCTSParams retValue = new MCTSParams(System.currentTimeMillis());
+    protected MCGSParams _copy() {
+        MCGSParams retValue = new MCGSParams(System.currentTimeMillis());
         retValue.K = K;
         retValue.rolloutLength = rolloutLength;
         retValue.maxTreeDepth = maxTreeDepth;
