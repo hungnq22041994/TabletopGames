@@ -2,9 +2,19 @@ package players.mcgs;
 
 public class ActionStats {
     // Total value of this node
-    private double totValue;
+    public double totValue;
     // Number of visits
-    private int nVisits;
+    public int nVisits;
+
+    public ActionStats() {
+        totValue = 0;
+        nVisits = 0;
+    }
+
+    public ActionStats(double totValue, int nVisits) {
+        this.totValue = totValue;
+        this.nVisits = nVisits;
+    }
 
     public double getTotValue() {
         return totValue;

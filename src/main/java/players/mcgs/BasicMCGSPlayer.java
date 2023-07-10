@@ -57,13 +57,13 @@ public class BasicMCGSPlayer extends AbstractPlayer {
     @Override
     public AbstractAction _getAction(AbstractGameState gameState, List<AbstractAction> allActions) {
         // Search for best action from the root
-        BasicGraphNode root = new BasicGraphNode(this, null, null, gameState, rnd);
+        BasicGraph graph = new BasicGraph(this, gameState, rnd);
 
         // mctsSearch does all of the hard work
-        root.mcgsSearch();
+        graph.mcgsSearch();
 
         // Return best action
-        return root.bestAction();
+        return graph.bestAction();
     }
 
     public void setStateHeuristic(IStateHeuristic heuristic) {

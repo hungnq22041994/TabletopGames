@@ -102,7 +102,7 @@ public class MCGSParams extends PlayerParameters {
         addTunableParameter("MASTGamma", 0.5, Arrays.asList(0.0, 0.5, 0.9, 1.0));
         addTunableParameter("expertIteration", false);
         addTunableParameter("expIterFile", "");
-        addTunableParameter("expertIterationStateFeatures", "");
+        addTunableParameter("expertIterationStateFeatures",  "games.tictactoe.TicTacToeStateVector");
         addTunableParameter("expertIterationActionFeatures", "");
         addTunableParameter("advantageFunction", "");
         addTunableParameter("biasVisits", 0, Arrays.asList(0, 1, 3, 10, 30, 100));
@@ -115,6 +115,7 @@ public class MCGSParams extends PlayerParameters {
         addTunableParameter("advantageFunction", IActionHeuristic.nullReturn);
         addTunableParameter("omaVisits", 0);
         addTunableParameter("paranoid", false);
+        _reset();
     }
 
     @Override
