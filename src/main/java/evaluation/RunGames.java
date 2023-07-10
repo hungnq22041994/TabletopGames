@@ -7,8 +7,12 @@ import evaluation.tournaments.AbstractTournament.TournamentMode;
 import evaluation.tournaments.RandomRRTournament;
 import evaluation.tournaments.RoundRobinTournament;
 import games.GameType;
+import players.PlayerConstants;
 import players.PlayerFactory;
+import players.mcgs.BasicMCGSPlayer;
+import players.mcgs.MCGSParams;
 import players.mcts.BasicMCTSPlayer;
+import players.mcts.MCTSParams;
 import players.mcts.MCTSPlayer;
 import players.rmhc.RMHCPlayer;
 import players.simple.OSLAPlayer;
@@ -87,14 +91,14 @@ public class RunGames {
 
         boolean selfPlay = getArg(args, "selfPlay", false);
         String mode = getArg(args, "mode", "random");
-        int matchups = getArg(args, "matchups", 1);
+        int matchups = getArg(args, "matchups", 50);
         String playerDirectory = getArg(args, "players", "");
         String focusPlayer = getArg(args, "focusPlayer", "");
 
         String destDir = getArg(args, "destDir", "metrics/out");
         boolean addTimestamp = getArg(args, "addTimestamp", false);
         int reportPeriod = getArg(args, "reportPeriod", matchups);
-        boolean verbose = getArg(args, "verbose", false);
+        boolean verbose = getArg(args, "verbose", true);
         String resultsFile = getArg(args, "output", "");
 
         List<String> listenerClasses = new ArrayList<>(Arrays.asList(getArg(args, "listener", "evaluation.listeners.MetricsGameListener").split("\\|")));
@@ -105,11 +109,20 @@ public class RunGames {
             agents.addAll(PlayerFactory.createPlayers(playerDirectory));
         } else {
             /* 2. Set up players */
-            agents.add(new MCTSPlayer());
-            agents.add(new BasicMCTSPlayer());
-            agents.add(new RandomPlayer());
-            agents.add(new RMHCPlayer());
-            agents.add(new OSLAPlayer());
+//            agents.add(new BasicMCTSPlayer());
+//            todo: draw with basic mcts
+            MCGSParams params = new MCGSParams();
+            params.budgetType = PlayerConstants.BUDGET_ITERATIONS;
+            params.budget = 200;
+            BasicMCGSPlayer e = new BasicMCGSPlayer(params);
+            agents.add(e);
+            MCTSParams mparams = new MCTSParams();
+            mparams.budgetType = PlayerConstants.BUDGET_ITERATIONS;
+            mparams.budget = 200;
+            BasicMCTSPlayer f = new BasicMCTSPlayer(mparams);
+            agents.add(f);
+//            agents.add(new RandomPlayer());
+//            agents.add(new OSLAPlayer());
         }
         AbstractPlayer focus = null;
         if (!focusPlayer.equals("")) {
