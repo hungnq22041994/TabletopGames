@@ -91,7 +91,7 @@ public class RunGames {
 
         boolean selfPlay = getArg(args, "selfPlay", false);
         String mode = getArg(args, "mode", "random");
-        int matchups = getArg(args, "matchups", 50);
+        int matchups = getArg(args, "matchups", 100);
         String playerDirectory = getArg(args, "players", "");
         String focusPlayer = getArg(args, "focusPlayer", "");
 

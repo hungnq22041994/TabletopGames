@@ -2,6 +2,7 @@ package players.mcgs;
 
 import core.AbstractGameState;
 import core.actions.AbstractAction;
+import org.jetbrains.annotations.NotNull;
 import players.PlayerConstants;
 import utilities.ElapsedCpuTimer;
 import utilities.Pair;
@@ -11,15 +12,9 @@ import java.util.*;
 import static players.PlayerConstants.*;
 
 public class BasicGraph {
-    //    State S -> action a -> hash the State(s,a) -> put in transpositionMap, hash value ,
-    //    if we advance from a random state, with action -> look in to the transpositionMap to find the state
-    //    tic tac toe -> several hash version, get the game state (position of x and o)
-    //    hash function H(s)
+
     private final Map<String, BasicGraphNode> transpositionMap = new HashMap<>();
     private final BasicGraphNode rootNode;
-
-    // Number of FM calls and State copies for this graph
-    private int fmCallsCount;
 
     protected BasicMCGSPlayer player;
 
@@ -30,6 +25,14 @@ public class BasicGraph {
         this.rnd = rnd;
         this.rootNode = new BasicGraphNode(player, state, rnd);
         transpositionMap.put(getHashCode(state, player.getPlayerID()), this.rootNode);
+    }
+
+    public Map<String, BasicGraphNode> getTranspositionMap() {
+        return transpositionMap;
+    }
+
+    public BasicGraphNode getRootNode() {
+        return rootNode;
     }
 
     /**
@@ -52,7 +55,6 @@ public class BasicGraph {
 
         boolean stop = false;
 
-//        node + action
         Deque<Pair<BasicGraphNode, AbstractAction>> trajectories = new ArrayDeque<>();
         while (!stop) {
             // New timer for this iteration
@@ -79,9 +81,6 @@ public class BasicGraph {
             } else if (budgetType == BUDGET_ITERATIONS) {
                 // Iteration budget
                 stop = numIters >= player.params.budget;
-            } else if (budgetType == BUDGET_FM_CALLS) {
-                // FM calls budget
-                stop = getFmCallsCount() > player.params.budget;
             }
         }
     }
@@ -91,58 +90,67 @@ public class BasicGraph {
      *
      */
 
-    private BasicGraphNode graphPolicy(BasicGraphNode node, Deque<Pair<BasicGraphNode, AbstractAction>> trajectories) {
+    protected BasicGraphNode graphPolicy(BasicGraphNode node, Deque<Pair<BasicGraphNode, AbstractAction>> trajectories) {
         BasicGraphNode currentNode = node;
+        AbstractGameState nextState = node.state.copy();
 
         while (currentNode.state.isNotTerminal()) {
             List<AbstractAction> availableActions = currentNode.player.getForwardModel().computeAvailableActions(currentNode.state);
-            for (AbstractAction action : availableActions) {
-                if (!currentNode.actionStatsMap.containsKey(action)) {
-                    ActionStats actionStats = new ActionStats();
-                    currentNode.actionStatsMap.put(action, actionStats);
-                }
-            }
+            populateNodeActionStats(currentNode, availableActions);
 
-            List<AbstractAction> unexpandedActions = new ArrayList<>();
-            for (Map.Entry<AbstractAction, ActionStats> entry: currentNode.actionStatsMap.entrySet()) {
-                if (entry.getValue().nVisits == 0) {
-                    unexpandedActions.add(entry.getKey());
-                }
-            }
+            List<AbstractAction> unexpandedActions = getUnexpandedActions(currentNode);
 
             if (!unexpandedActions.isEmpty()) {
                 Random r = new Random();
                 AbstractAction action = unexpandedActions.get(r.nextInt(unexpandedActions.size()));
                 trajectories.push(new Pair<>(currentNode, action));
-                AbstractGameState nextState = currentNode.state.copy();
                 currentNode.advance(nextState, action);
                 String hashCode = getHashCode(nextState, currentNode.player.getPlayerID());
                 if (isNodeExist(hashCode)) {
                     return getNode(hashCode);
                 } else {
-                    BasicGraphNode new_node = new BasicGraphNode(player, nextState, rnd);
-                    putNode(hashCode, new_node);
-                    currentNode = new_node;
-                    return currentNode;
+                    return createNewNode(nextState, hashCode);
                 }
             } else {
-//                todo: reduce state copy
                 AbstractAction action = currentNode.ucb(availableActions);
                 trajectories.push(new Pair<>(currentNode, action));
-                AbstractGameState nextState = currentNode.state.copy();
                 currentNode.advance(nextState, action);
                 String hashCode = getHashCode(nextState, currentNode.player.getPlayerID());
                 if (isNodeExist(hashCode)) {
                     currentNode = getNode(hashCode);
                 } else {
-                    BasicGraphNode new_node = new BasicGraphNode(player, nextState, rnd);
-                    putNode(hashCode, new_node);
-                    currentNode = new_node;
+                    currentNode = createNewNode(nextState, hashCode);
                 }
             }
         }
 
         return currentNode;
+    }
+
+
+    private BasicGraphNode createNewNode(AbstractGameState nextState, String hashCode) {
+        BasicGraphNode new_node = new BasicGraphNode(player, nextState, rnd);
+        putNode(hashCode, new_node);
+        return new_node;
+    }
+
+    private static List<AbstractAction> getUnexpandedActions(BasicGraphNode currentNode) {
+        List<AbstractAction> unexpandedActions = new ArrayList<>();
+        for (Map.Entry<AbstractAction, ActionStats> entry: currentNode.actionStatsMap.entrySet()) {
+            if (entry.getValue().nVisits == 0) {
+                unexpandedActions.add(entry.getKey());
+            }
+        }
+        return unexpandedActions;
+    }
+
+    private static void populateNodeActionStats(BasicGraphNode currentNode, List<AbstractAction> availableActions) {
+        for (AbstractAction action : availableActions) {
+            if (!currentNode.actionStatsMap.containsKey(action)) {
+                ActionStats actionStats = new ActionStats();
+                currentNode.actionStatsMap.put(action, actionStats);
+            }
+        }
     }
 
 
@@ -167,19 +175,6 @@ public class BasicGraph {
     public BasicGraphNode getNode(String hashCode) {
         return transpositionMap.get(hashCode);
     }
-
-    public void increaseFmCallCount() {
-        fmCallsCount++;
-    }
-
-    public int getFmCallsCount() {
-        return fmCallsCount;
-    }
-
-    public void setFmCallsCount(int fmCallsCount) {
-        this.fmCallsCount = fmCallsCount;
-    }
-
 
     public AbstractAction bestAction() {
         return rootNode.bestAction();
@@ -210,11 +205,6 @@ public class BasicGraph {
                 node.actionStatsMap.put(trajectory.b, actionStats);
             }
         }
-    }
-
-    protected int getHashCode(BasicGraphNode node) {
-        double[] a = player.params.EIStateFeatureVector.featureVector(node.state, node.player.getPlayerID());
-        return Arrays.hashCode(a);
     }
 
     private String getHashCode(AbstractGameState state, int playerID) {

@@ -13,8 +13,6 @@ class BasicGraphNode {
     // State in this node
     protected AbstractGameState state;
 
-//    applied the action already, have i took this action already
-//    store statistic for ucb
     protected Map<AbstractAction, ActionStats> actionStatsMap = new HashMap<>();
 
     // Parameters guiding the search
@@ -61,9 +59,7 @@ class BasicGraphNode {
             // If 'we' are taking a turn we use classic UCB
             // If it is an opponent's turn, then we assume they are trying to minimise our score (with exploration)
             boolean iAmMoving = state.getCurrentPlayer() == player.getPlayerID();
-//          todo: maximize our score only
             double uctValue = iAmMoving ? childValue : -childValue;
-//            double uctValue = childValue;
             uctValue += explorationTerm;
 
             // Apply small noise to break ties randomly
