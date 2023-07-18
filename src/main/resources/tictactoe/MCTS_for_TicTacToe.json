@@ -9,7 +9,7 @@
         "selectionPolicy" : "SIMPLE",
         "treePolicy" : "UCB",
         "opponentTreePolicy" : "OneTree",
-        "budget" : 20,
+        "budget" : 40,
         "epsilon" : 1e-6,
         "breakMS" : 0,
         "exploreEpsilon" : 0.1,
