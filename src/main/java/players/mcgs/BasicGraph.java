@@ -2,14 +2,14 @@ package players.mcgs;
 
 import core.AbstractGameState;
 import core.actions.AbstractAction;
-import org.jetbrains.annotations.NotNull;
 import players.PlayerConstants;
 import utilities.ElapsedCpuTimer;
 import utilities.Pair;
 
 import java.util.*;
 
-import static players.PlayerConstants.*;
+import static players.PlayerConstants.BUDGET_ITERATIONS;
+import static players.PlayerConstants.BUDGET_TIME;
 
 public class BasicGraph {
 
@@ -87,39 +87,48 @@ public class BasicGraph {
 
     /**
      * Selection + expansion steps.
-     *
      */
 
     protected BasicGraphNode graphPolicy(BasicGraphNode node, Deque<Pair<BasicGraphNode, AbstractAction>> trajectories) {
         BasicGraphNode currentNode = node;
-        AbstractGameState nextState = node.state.copy();
+        AbstractGameState nextState = currentNode.state.copy();
 
-        while (currentNode.state.isNotTerminal()) {
-            List<AbstractAction> availableActions = currentNode.player.getForwardModel().computeAvailableActions(currentNode.state);
-            populateNodeActionStats(currentNode, availableActions);
+        while (nextState.isNotTerminal()) {
+            List<AbstractAction> availableActions = currentNode.player.getForwardModel().computeAvailableActions(nextState);
 
-            List<AbstractAction> unexpandedActions = getUnexpandedActions(currentNode);
+            List<AbstractAction> unexpandedActions = new ArrayList<>();
+            for (AbstractAction action : availableActions) {
+                if (!currentNode.actionStatsMap.containsKey(action)) {
+                    ActionStats actionStats = new ActionStats();
+                    currentNode.actionStatsMap.put(action, actionStats);
+                    unexpandedActions.add(action);
+                } else {
+                    if (currentNode.actionStatsMap.get(action).getnVisits() == 0) {
+                        unexpandedActions.add(action);
+                    }
+                }
+            }
 
             if (!unexpandedActions.isEmpty()) {
                 Random r = new Random();
                 AbstractAction action = unexpandedActions.get(r.nextInt(unexpandedActions.size()));
                 trajectories.push(new Pair<>(currentNode, action));
-                currentNode.advance(nextState, action);
+                currentNode.advance(nextState, action.copy());
                 String hashCode = getHashCode(nextState, currentNode.player.getPlayerID());
                 if (isNodeExist(hashCode)) {
                     return getNode(hashCode);
                 } else {
-                    return createNewNode(nextState, hashCode);
+                    return createNewNode(nextState.copy(), hashCode);
                 }
             } else {
                 AbstractAction action = currentNode.ucb(availableActions);
                 trajectories.push(new Pair<>(currentNode, action));
-                currentNode.advance(nextState, action);
+                currentNode.advance(nextState, action.copy());
                 String hashCode = getHashCode(nextState, currentNode.player.getPlayerID());
                 if (isNodeExist(hashCode)) {
                     currentNode = getNode(hashCode);
                 } else {
-                    currentNode = createNewNode(nextState, hashCode);
+                    currentNode = createNewNode(nextState.copy(), hashCode);
                 }
             }
         }
@@ -134,37 +143,9 @@ public class BasicGraph {
         return new_node;
     }
 
-    private static List<AbstractAction> getUnexpandedActions(BasicGraphNode currentNode) {
-        List<AbstractAction> unexpandedActions = new ArrayList<>();
-        for (Map.Entry<AbstractAction, ActionStats> entry: currentNode.actionStatsMap.entrySet()) {
-            if (entry.getValue().nVisits == 0) {
-                unexpandedActions.add(entry.getKey());
-            }
-        }
-        return unexpandedActions;
-    }
-
-    private static void populateNodeActionStats(BasicGraphNode currentNode, List<AbstractAction> availableActions) {
-        for (AbstractAction action : availableActions) {
-            if (!currentNode.actionStatsMap.containsKey(action)) {
-                ActionStats actionStats = new ActionStats();
-                currentNode.actionStatsMap.put(action, actionStats);
-            }
-        }
-    }
-
-
     public void putNode(String hashCode, BasicGraphNode node) {
         if (!isNodeExist(hashCode)) {
             transpositionMap.put(hashCode, node);
-        }
-    }
-
-    public BasicGraphNode putIfAbsent(String hashCode, BasicGraphNode node) {
-        if (!isNodeExist(hashCode)) {
-            return transpositionMap.put(hashCode, node);
-        } else {
-            return transpositionMap.get(hashCode);
         }
     }
 
@@ -181,10 +162,10 @@ public class BasicGraph {
     }
 
     /**
-     * Back up the value of the child through all parents. Increase number of visits and total value.
+     * Back up the value of the all nodes in trajectories. Increase number of visits and total value.
      *
-     * @param result         - value of rollout to back up
-     * @param trajectories
+     * @param result       - value of rollout to back up
+     * @param trajectories - sequence of node + action
      */
     protected void backUp(double result, Deque<Pair<BasicGraphNode, AbstractAction>> trajectories) {
         while (trajectories.peekLast() != null) {

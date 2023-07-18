@@ -91,7 +91,7 @@ public class RunGames {
 
         boolean selfPlay = getArg(args, "selfPlay", false);
         String mode = getArg(args, "mode", "random");
-        int matchups = getArg(args, "matchups", 100);
+        int matchups = getArg(args, "matchups", 50);
         String playerDirectory = getArg(args, "players", "");
         String focusPlayer = getArg(args, "focusPlayer", "");
 
@@ -114,6 +114,8 @@ public class RunGames {
             MCGSParams params = new MCGSParams();
             params.budgetType = PlayerConstants.BUDGET_ITERATIONS;
             params.budget = 200;
+            params.expertIterationStateFeatures = "games.loveletter.LLStateFeaturesV1";
+            params._reset();
             BasicMCGSPlayer e = new BasicMCGSPlayer(params);
             agents.add(e);
             MCTSParams mparams = new MCTSParams();
