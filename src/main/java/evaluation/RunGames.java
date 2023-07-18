@@ -109,22 +109,9 @@ public class RunGames {
             agents.addAll(PlayerFactory.createPlayers(playerDirectory));
         } else {
             /* 2. Set up players */
-//            agents.add(new BasicMCTSPlayer());
-//            todo: draw with basic mcts
-            MCGSParams params = new MCGSParams();
-            params.budgetType = PlayerConstants.BUDGET_ITERATIONS;
-            params.budget = 200;
-            params.expertIterationStateFeatures = "games.loveletter.LLStateFeaturesV1";
-            params._reset();
-            BasicMCGSPlayer e = new BasicMCGSPlayer(params);
-            agents.add(e);
-            MCTSParams mparams = new MCTSParams();
-            mparams.budgetType = PlayerConstants.BUDGET_ITERATIONS;
-            mparams.budget = 200;
-            BasicMCTSPlayer f = new BasicMCTSPlayer(mparams);
-            agents.add(f);
-//            agents.add(new RandomPlayer());
-//            agents.add(new OSLAPlayer());
+            agents.add(new BasicMCTSPlayer());
+            agents.add(new RandomPlayer());
+            agents.add(new OSLAPlayer());
         }
         AbstractPlayer focus = null;
         if (!focusPlayer.equals("")) {
