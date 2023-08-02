@@ -67,12 +67,11 @@ public class BasicGraphTest {
 
     @Test
     public void testGraphPolicy() {
-        Deque<Pair<BasicGraphNode, AbstractAction>> trajectories = new ArrayDeque<>();
-        BasicGraphNode node = basicGraph.graphPolicy(basicGraph.getRootNode(), trajectories);
+        Pair<BasicGraphNode, Deque<Pair<BasicGraphNode, AbstractAction>>> result = basicGraph.graphPolicy(basicGraph.getRootNode());
 
         assertEquals(basicGraph.getTranspositionMap().size(), 2);
-        assertEquals(node.actionStatsMap.size(), 0);
-        assertEquals(trajectories.size(), 1);
+        assertEquals(result.a.actionStatsMap.size(), 0);
+        assertEquals(result.b.size(), 1);
     }
 
     @Test

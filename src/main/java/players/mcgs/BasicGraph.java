@@ -3,6 +3,7 @@ package players.mcgs;
 import core.AbstractGameState;
 import core.actions.AbstractAction;
 import players.PlayerConstants;
+import players.mcts.TreeStatistics;
 import utilities.ElapsedCpuTimer;
 import utilities.Pair;
 
@@ -19,6 +20,8 @@ public class BasicGraph {
     protected BasicMCGSPlayer player;
 
     protected Random rnd;
+
+    public int depthReached;
 
     public BasicGraph(BasicMCGSPlayer player, AbstractGameState state, Random rnd) {
         this.player = player;
@@ -55,18 +58,18 @@ public class BasicGraph {
 
         boolean stop = false;
 
-        Deque<Pair<BasicGraphNode, AbstractAction>> trajectories = new ArrayDeque<>();
         while (!stop) {
             // New timer for this iteration
             ElapsedCpuTimer elapsedTimerIteration = new ElapsedCpuTimer();
 
-            // Selection + expansion: navigate tree until a node not fully expanded is found, add a new node to the tree
-            BasicGraphNode selected = graphPolicy(rootNode, trajectories);
+            // Selection + expansion: navigate tree until a node not fully expanded is found, add a new node to the graph
+            Pair<BasicGraphNode, Deque<Pair<BasicGraphNode, AbstractAction>>> policy = graphPolicy(rootNode);
 
             // Monte carlo rollout: return value of MC rollout from the newly added node
-            double delta = selected.rollOut();
-            // Back up the value of the rollout through the tree
-            backUp(delta, trajectories);
+            double delta = policy.a.rollOut();
+            getMaxDepth(policy);
+            // Back up the value of the rollout through the trajectory
+            backUp(delta, policy.b);
             // Finished iteration
             numIters++;
 
@@ -85,11 +88,19 @@ public class BasicGraph {
         }
     }
 
+    private void getMaxDepth(Pair<BasicGraphNode, Deque<Pair<BasicGraphNode, AbstractAction>>> policy) {
+        int size = policy.b.size();
+        if (depthReached < size) {
+            depthReached = size;
+        }
+    }
+
     /**
      * Selection + expansion steps.
      */
 
-    protected BasicGraphNode graphPolicy(BasicGraphNode node, Deque<Pair<BasicGraphNode, AbstractAction>> trajectories) {
+    protected Pair<BasicGraphNode, Deque<Pair<BasicGraphNode, AbstractAction>>> graphPolicy(BasicGraphNode node) {
+        Deque<Pair<BasicGraphNode, AbstractAction>> trajectories = new ArrayDeque<>();
         BasicGraphNode currentNode = node;
         AbstractGameState nextState = currentNode.state.copy();
 
@@ -116,9 +127,9 @@ public class BasicGraph {
                 currentNode.advance(nextState, action.copy());
                 String hashCode = getHashCode(nextState, currentNode.player.getPlayerID());
                 if (isNodeExist(hashCode)) {
-                    return getNode(hashCode);
+                    return new Pair<>(getNode(hashCode), trajectories);
                 } else {
-                    return createNewNode(nextState.copy(), hashCode);
+                    return new Pair<>(createNewNode(nextState.copy(), hashCode), trajectories);
                 }
             } else {
                 AbstractAction action = currentNode.ucb(availableActions);
@@ -133,7 +144,7 @@ public class BasicGraph {
             }
         }
 
-        return currentNode;
+        return new Pair<>(currentNode, trajectories);
     }
 
 
@@ -191,5 +202,12 @@ public class BasicGraph {
     private String getHashCode(AbstractGameState state, int playerID) {
         double[] featureVector = player.params.EIStateFeatureVector.featureVector(state, playerID);
         return Arrays.toString(featureVector);
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder retValue = new StringBuilder();
+        retValue.append(new GraphStatistics(this));
+        return retValue.toString();
     }
 }

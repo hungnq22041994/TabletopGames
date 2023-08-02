@@ -18,12 +18,14 @@ class BasicGraphNode {
     // Parameters guiding the search
     protected BasicMCGSPlayer player;
     protected Random rnd;
+    boolean isTerminal;
     protected RandomPlayer randomPlayer = new RandomPlayer();
 
     protected BasicGraphNode(BasicMCGSPlayer player, AbstractGameState state, Random rnd) {
         this.player = player;
         this.state = state.copy();
         this.rnd = rnd;
+        this.isTerminal = !state.isNotTerminal();
     }
 
     /**

@@ -47,8 +47,7 @@ public class BasicMCGSPlayer extends AbstractPlayer {
         // mctsSearch does all of the hard work
         graph.mcgsSearch();
 
-//        System.out.println("Total visit of graph:" + graph.getRootNode().getTotalVisit() + " with nodes:" + graph.getTranspositionMap().size());
-
+//        System.out.println(graph);
         // Return best action
         return graph.bestAction();
     }
@@ -56,7 +55,6 @@ public class BasicMCGSPlayer extends AbstractPlayer {
     public void setStateHeuristic(IStateHeuristic heuristic) {
         this.params.heuristic = heuristic;
     }
-
 
     @Override
     public String toString() {
