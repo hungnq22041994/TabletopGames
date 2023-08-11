@@ -73,8 +73,8 @@ public class MCGSParams extends PlayerParameters {
     }
 
     @Override
-    public BasicMCGSPlayer instantiate() {
-        return new BasicMCGSPlayer(this);
+    public MCGSPlayer instantiate() {
+        return new MCGSPlayer(this);
     }
 
 }

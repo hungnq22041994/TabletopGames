@@ -3,7 +3,6 @@ package players.mcgs;
 import core.AbstractGameState;
 import core.actions.AbstractAction;
 import players.PlayerConstants;
-import players.mcts.TreeStatistics;
 import utilities.ElapsedCpuTimer;
 import utilities.Pair;
 

@@ -335,8 +335,8 @@ public class MCTSParams extends PlayerParameters {
     }
 
     @Override
-    public BasicMCTSPlayer instantiate() {
-        return new BasicMCTSPlayer(this);
+    public MCTSPlayer instantiate() {
+        return new MCTSPlayer(this);
     }
 
 }
