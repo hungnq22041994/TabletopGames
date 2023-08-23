@@ -1,0 +1,12 @@
+{
+	"class" : "players.mcgs.BasicMCGSParams",
+	"K" : 1.0,
+	"rolloutLength" : 100,
+	"epsilon" : 1e-6,
+	"budgetType" : "BUDGET_ITERATIONS",
+	"budget" : 500,
+	"heuristic" : {
+ 		"class" : "players.heuristics.WinOnlyHeuristic"
+	},
+	"expertIterationStateFeatures" : "games.tictactoe.TicTacToeStateVector"
+}

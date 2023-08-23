@@ -39,8 +39,8 @@ public class BaronAction extends PlayCard implements IPrintable {
             else if (playerCard.cardType.getValue() < opponentCard.cardType.getValue())
                 llgs.killPlayer(playerID, playerID, cardType);
         } else {
-            throw new IllegalArgumentException("player with ID " + targetPlayer + " was targeted using a Baron card" +
-                    " but one of the players has no cards left.");
+//            throw new IllegalArgumentException("player with ID " + targetPlayer + " was targeted using a Baron card" +
+//                    " but one of the players has no cards left.");
         }
 
         return true;

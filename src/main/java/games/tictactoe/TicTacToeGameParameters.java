@@ -8,11 +8,11 @@ import java.util.*;
 
 public class TicTacToeGameParameters extends TunableParameters {
 
-    public int gridSize = 3;
+    public int gridSize = 6;
 
     public TicTacToeGameParameters(long seed) {
         super(seed);
-        addTunableParameter("gridSize", 3, Arrays.asList(3, 4, 5, 6));
+        addTunableParameter("gridSize", 6, Arrays.asList(3, 4, 5, 6));
         _reset();
     }
 

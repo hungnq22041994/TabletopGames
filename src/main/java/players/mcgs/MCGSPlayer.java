@@ -47,7 +47,7 @@ public class MCGSPlayer extends AbstractPlayer {
         // mctsSearch does all of the hard work
         graph.mcgsSearch();
 
-//        System.out.println(graph);
+//        System.out.println("MCGS Player " + graph);
         // Return best action
         return graph.bestAction();
     }

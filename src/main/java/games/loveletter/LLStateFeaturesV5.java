@@ -20,7 +20,7 @@ public class LLStateFeaturesV5 implements IStateFeatureVector {
     public double[] featureVector(AbstractGameState gs, int playerId) {
         LoveLetterGameState llgs = (LoveLetterGameState) gs;
 
-        double[] cardsInHand = new double[10];
+        double[] cardsInHand = new double[3];
 
         int i = 0;
         for (LoveLetterCard card : llgs.getPlayerHandCards().get(playerId).getComponents()) {

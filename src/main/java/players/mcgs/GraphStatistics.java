@@ -15,7 +15,7 @@ public class GraphStatistics {
         depthReached = graph.depthReached;
         totalNodes = nodeMap.size();
         for (Map.Entry<String, BasicGraphNode> entry : nodeMap.entrySet()) {
-            if (entry.getValue().getTotalVisit() == 1) {
+            if (entry.getValue().getTotalVisit() == 0) {
                 totalLeaves++;
             }
             if (entry.getValue().isTerminal) {
@@ -23,6 +23,23 @@ public class GraphStatistics {
             }
             if (maxActionsAtNode < entry.getValue().actionStatsMap.size()) {
                 maxActionsAtNode = entry.getValue().actionStatsMap.size();
+            }
+        }
+    }
+
+    public GraphStatistics(DAG graph) {
+        Map<String, DAGNode> nodeMap = graph.getTranspositionMap();
+        depthReached = graph.depthReached;
+        totalNodes = nodeMap.size();
+        for (Map.Entry<String, DAGNode> entry : nodeMap.entrySet()) {
+            if (graph.getTotalVisit(entry.getKey()) == 0) {
+                totalLeaves++;
+            }
+            if (entry.getValue().isTerminal) {
+                totalTerminalNodes++;
+            }
+            if (maxActionsAtNode < graph.getEdges(entry.getKey()).size()) {
+                maxActionsAtNode = graph.getEdges(entry.getKey()).size();
             }
         }
     }

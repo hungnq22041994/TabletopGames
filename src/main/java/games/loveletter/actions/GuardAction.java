@@ -9,6 +9,7 @@ import games.loveletter.cards.LoveLetterCard;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * The guard allows to attempt guessing another player's card. If the guess is correct, the targeted opponent
@@ -26,7 +27,7 @@ public class GuardAction extends PlayCard implements IPrintable {
 
         // guess the opponent's card and remove the opponent from play if the guess was correct
         LoveLetterCard card = opponentDeck.peek();
-        if (card.cardType == this.targetCardType) {
+        if (Objects.nonNull(card) && card.cardType == this.targetCardType) {
             llgs.killPlayer(playerID, targetPlayer, cardType);
             if (llgs.getCoreGameParameters().recordEventHistory) {
                 llgs.recordHistory("Guard guess correct!");

@@ -26,7 +26,7 @@ public class BasicGraphTest {
 
     @Before
     public void setup() {
-        MCGSParams params = new MCGSParams(1234);
+        BasicMCGSParams params = new BasicMCGSParams(1234);
         params.setParameterValue("expertIterationStateFeatures", "games.tictactoe.TicTacToeStateVector");
         player = new BasicMCGSPlayer(params);
         ticTacToe = createTicTacToe(3);
@@ -46,7 +46,7 @@ public class BasicGraphTest {
 
     @Test
     public void testMCGSSearch1Iteration() {
-        MCGSParams params = new MCGSParams();
+        BasicMCGSParams params = new BasicMCGSParams();
         params.setParameterValue("budgetType", PlayerConstants.BUDGET_ITERATIONS);
         params.setParameterValue("budget", 1);
         params.setParameterValue("expertIterationStateFeatures", "games.tictactoe.TicTacToeStateVector");

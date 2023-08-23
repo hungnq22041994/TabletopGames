@@ -1,0 +1,12 @@
+{
+	"class" : "players.mcgs.MCGSParams",
+	"K" : 1.0,
+	"rolloutLength" : 30,
+	"epsilon" : 1e-6,
+	"budgetType" : "BUDGET_ITERATIONS",
+	"budget" : 2000,
+	"heuristic" : {
+ 		"class" : "players.heuristics.LeaderHeuristic"
+	},
+	"expertIterationStateFeatures" : "games.loveletter.LLStateFeaturesV1"
+}

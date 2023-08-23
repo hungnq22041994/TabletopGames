@@ -3,6 +3,7 @@ package players.mcts;
 import core.AbstractGameState;
 import core.actions.AbstractAction;
 import players.PlayerConstants;
+import players.mcgs.GraphStatistics;
 import players.simple.RandomPlayer;
 import utilities.ElapsedCpuTimer;
 
@@ -21,6 +22,8 @@ class BasicTreeNode {
     Map<AbstractAction, BasicTreeNode> children = new HashMap<>();
     // Depth of this node
     final int depth;
+
+    boolean terminalNode;
 
     // Total value of this node
     private double totValue;
@@ -48,6 +51,7 @@ class BasicTreeNode {
         } else {
             depth = 0;
         }
+        this.terminalNode = !state.isNotTerminal();
         this.rnd = rnd;
     }
 
@@ -307,6 +311,13 @@ class BasicTreeNode {
         }
 
         return bestAction;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder retValue = new StringBuilder();
+        retValue.append(new TreeStatistics(this));
+        return retValue.toString();
     }
 
 }

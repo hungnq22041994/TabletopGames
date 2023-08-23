@@ -30,6 +30,9 @@ public class PrinceAction extends PlayCard implements IPrintable {
         Deck<LoveLetterCard> drawPile = llgs.getDrawPile();
 
         LoveLetterCard card = opponentDeck.draw();
+        if (Objects.isNull(card)) {
+            return true;
+        }
         opponentDiscardPile.add(card);
 
         // if the discarded card is a princess, the targeted player loses the game

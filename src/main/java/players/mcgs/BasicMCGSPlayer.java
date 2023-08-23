@@ -16,14 +16,14 @@ import java.util.Random;
 public class BasicMCGSPlayer extends AbstractPlayer {
 
     Random rnd;
-    MCGSParams params;
+    BasicMCGSParams params;
 
     public BasicMCGSPlayer() {
         this(System.currentTimeMillis());
     }
 
     public BasicMCGSPlayer(long seed) {
-        this.params = new MCGSParams(seed);
+        this.params = new BasicMCGSParams(seed);
         rnd = new Random(seed);
         setName("Basic MCGS");
 
@@ -33,7 +33,7 @@ public class BasicMCGSPlayer extends AbstractPlayer {
         this.params.epsilon = 1e-6;
     }
 
-    public BasicMCGSPlayer(MCGSParams params) {
+    public BasicMCGSPlayer(BasicMCGSParams params) {
         this.params = params;
         rnd = new Random(params.getRandomSeed());
         setName("Basic MCGS");
@@ -47,7 +47,7 @@ public class BasicMCGSPlayer extends AbstractPlayer {
         // mctsSearch does all of the hard work
         graph.mcgsSearch();
 
-//        System.out.println(graph);
+//        System.out.println("Basic MCGS " + graph);
         // Return best action
         return graph.bestAction();
     }

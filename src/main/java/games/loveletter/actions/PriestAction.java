@@ -6,10 +6,12 @@ import core.interfaces.IPrintable;
 import games.loveletter.LoveLetterGameState;
 import core.components.PartialObservableDeck;
 import games.loveletter.cards.LoveLetterCard;
+import org.apache.commons.collections.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * The Priest allows a player to see another player's hand cards.
@@ -31,9 +33,11 @@ public class PriestAction extends PlayCard implements IPrintable {
         for (int i = 0; i < opponentDeck.getComponents().size(); i++)
             opponentDeck.setVisibilityOfComponent(i, playerID, true);
 
-        opponentCard = opponentDeck.get(0).cardType;
-        if (llgs.getCoreGameParameters().recordEventHistory) {
-            llgs.recordHistory("Priest sees " + opponentCard);
+        if (CollectionUtils.isNotEmpty(opponentDeck.getComponents())) {
+            opponentCard = opponentDeck.get(0).cardType;
+            if (llgs.getCoreGameParameters().recordEventHistory) {
+                llgs.recordHistory("Priest sees " + opponentCard);
+            }
         }
         return true;
     }

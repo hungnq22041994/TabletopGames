@@ -23,6 +23,8 @@ public class DAG {
 
     protected Random rnd;
 
+    public int depthReached;
+
     public DAG(MCGSPlayer player, AbstractGameState state, Random rnd) {
         this.player = player;
         this.rnd = rnd;
@@ -62,10 +64,7 @@ public class DAG {
     // Add a directed edge between two vertices
     public void addEdge(String sourceHashCode, String destinationHashCode, AbstractAction action) {
         if (!adjacencyList.containsKey(sourceHashCode))
-            throw new IllegalArgumentException("Source vertices must exist in DAG");
-
-        if (doesPathExist(destinationHashCode, sourceHashCode))
-            throw new IllegalArgumentException("Adding this edge would create a cycle!");
+            throw new IllegalArgumentException("Source vertex must exist in DAG");
 
         if (StringUtils.isBlank(destinationHashCode)) {
             adjacencyList.get(sourceHashCode).put(action, new Edge(null, new ActionStats()));
@@ -132,6 +131,7 @@ public class DAG {
 
             // Monte carlo rollout: return value of MC rollout from the newly added node
             double delta = policy.a.rollOut();
+            getMaxDepth(policy);
             // Back up the value of the rollout through the trajectory
             backUp(delta, policy.b);
             // Finished iteration
@@ -180,6 +180,7 @@ public class DAG {
                 currentNode.advance(nextState, action.copy());
                 String nextHashCode = getHashCode(nextState, currentNode.player.getPlayerID());
                 if (isNodeExist(nextHashCode) && doesPathExist(currentHashCode, nextHashCode)) {
+                    addEdge(currentHashCode, nextHashCode, action);
                     return new Pair<>(getNode(nextHashCode), trajectories);
                 } else {
                     DAGNode newNode = createNewNode(nextState.copy(), nextHashCode);
@@ -247,7 +248,7 @@ public class DAG {
         return bestAction;
     }
 
-    private int getTotalVisit(String hashCode) {
+    protected int getTotalVisit(String hashCode) {
         int count = 0;
         Map<AbstractAction, Edge> edges = getEdges(hashCode);
         for (AbstractAction action: edges.keySet()) {
@@ -335,9 +336,18 @@ public class DAG {
         }
     }
 
+    private void getMaxDepth(Pair<DAGNode, Deque<Pair<String, AbstractAction>>> policy) {
+        int size = policy.b.size();
+        if (depthReached < size) {
+            depthReached = size;
+        }
+    }
+
     @Override
     public String toString() {
-        return adjacencyList.toString();
+        StringBuilder retValue = new StringBuilder();
+        retValue.append(new GraphStatistics(this));
+        return retValue.toString();
     }
 
 }
