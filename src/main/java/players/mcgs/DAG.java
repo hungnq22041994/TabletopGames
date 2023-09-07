@@ -288,16 +288,19 @@ public class DAG {
         AbstractAction bestAction = null;
         Map<AbstractAction, Edge> edges = getEdges(rootNode);
 
+        List<AbstractAction> availableActions = rootNode.player.getForwardModel().computeAvailableActions(rootNode.state);
         for (Map.Entry<AbstractAction, Edge> action : edges.entrySet()) {
-            double childValue = action.getValue().stats.nVisits;
+            if (availableActions.contains(action.getKey())) {
+                double childValue = action.getValue().stats.nVisits;
 
-            // Apply small noise to break ties randomly
-            childValue = noise(childValue, player.params.epsilon, player.rnd.nextDouble());
+                // Apply small noise to break ties randomly
+                childValue = noise(childValue, player.params.epsilon, player.rnd.nextDouble());
 
-            // Save best value (the highest visit count)
-            if (childValue > bestValue) {
-                bestValue = childValue;
-                bestAction = action.getKey();
+                // Save best value (the highest visit count)
+                if (childValue > bestValue) {
+                    bestValue = childValue;
+                    bestAction = action.getKey();
+                }
             }
         }
 

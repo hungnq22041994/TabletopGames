@@ -131,16 +131,20 @@ class BasicGraphNode {
         double bestValue = -Double.MAX_VALUE;
         AbstractAction bestAction = null;
 
+        List<AbstractAction> availableActions = this.player.getForwardModel().computeAvailableActions(this.state);
+
         for (Map.Entry<AbstractAction, ActionStats> action : actionStatsMap.entrySet()) {
-            double childValue = action.getValue().nVisits;
+            if (availableActions.contains(action.getKey())) {
+                double childValue = action.getValue().nVisits;
 
-            // Apply small noise to break ties randomly
-            childValue = noise(childValue, player.params.epsilon, player.rnd.nextDouble());
+                // Apply small noise to break ties randomly
+                childValue = noise(childValue, player.params.epsilon, player.rnd.nextDouble());
 
-            // Save best value (the highest visit count)
-            if (childValue > bestValue) {
-                bestValue = childValue;
-                bestAction = action.getKey();
+                // Save best value (the highest visit count)
+                if (childValue > bestValue) {
+                    bestValue = childValue;
+                    bestAction = action.getKey();
+                }
             }
         }
 
